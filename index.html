@@ -403,9 +403,9 @@
 
     <div id="peringatan" class="alert"></div>
 
-    <!-- Pengaturan Saldo, Batas Harian & Batas Saldo -->
+    <!-- Pengaturan Saldo & Batas Maksimal Harian -->
     <div class="card">
-      <h2>Atur Saldo &amp; Batas Maksimal</h2>
+      <h2>Atur Saldo &amp; Batas Harian</h2>
       <div class="row-inline">
         <div>
           <label for="inputSaldo">Saldo Awal (Rp)</label>
@@ -416,8 +416,6 @@
           <input type="text" inputmode="numeric" id="inputBatasHarian" placeholder="25.000" />
         </div>
       </div>
-      <label for="inputBatas">Batas Peringatan Total Saldo (Rp)</label>
-      <input type="text" inputmode="numeric" id="inputBatas" placeholder="30.000" />
       <button type="button" onclick="simpanPengaturan()">Simpan Pengaturan</button>
     </div>
 
@@ -502,7 +500,6 @@
     let state = {
       saldoAwal: 200000,
       batasHarian: 25000,
-      batasAman: 30000,
       items: [],
       rekapHarian: {},
       rekapMingguan: {},
@@ -540,24 +537,15 @@
       document.getElementById('btnInstall').classList.add('hidden');
     }
 
-    // Mengambil angka murni dari string input (menghapus titik/spasi/karakter non-digit)
     function parseAngka(val) {
       const digits = String(val ?? '').replace(/\D/g, '');
       return digits ? Number(digits) : 0;
-    }
-
-    // Memformat angka menjadi format ribuan Indonesia (contoh: 14000 -> "14.000")
-    function formatRibuan(angka) {
-      const n = parseAngka(angka);
-      if (!n && String(angka ?? '').replace(/\D/g, '') === '') return '';
-      return n.toLocaleString('id-ID');
     }
 
     function formatRp(angka) {
       return 'Rp' + Number(angka || 0).toLocaleString('id-ID');
     }
 
-    // Memasang pemformat titik otomatis saat mengetik pada input nominal/saldo
     function aktifkanFormatInputRibuan(inputId) {
       const el = document.getElementById(inputId);
       if (!el) return;
@@ -641,7 +629,6 @@
     function sinkronkanForm() {
       document.getElementById('inputSaldo').value = state.saldoAwal > 0 ? state.saldoAwal.toLocaleString('id-ID') : '0';
       document.getElementById('inputBatasHarian').value = state.batasHarian > 0 ? state.batasHarian.toLocaleString('id-ID') : '0';
-      document.getElementById('inputBatas').value = state.batasAman > 0 ? state.batasAman.toLocaleString('id-ID') : '0';
       document.getElementById('pilihTema').value = state.tampilan.tema;
       document.getElementById('pilihUkuran').value = state.tampilan.ukuran;
       document.getElementById('tanggalInput').value = getTanggalHariIniISO();
@@ -665,7 +652,6 @@
           state = {
             saldoAwal: Number(parsed.saldoAwal ?? 200000),
             batasHarian: Number(parsed.batasHarian ?? 25000),
-            batasAman: Number(parsed.batasAman ?? 30000),
             items: itemsMigrasi,
             rekapHarian: parsed.rekapHarian || {},
             rekapMingguan: parsed.rekapMingguan || {},
@@ -737,7 +723,6 @@
           state = {
             saldoAwal: Number(parsed.saldoAwal ?? 200000),
             batasHarian: Number(parsed.batasHarian ?? 25000),
-            batasAman: Number(parsed.batasAman ?? 30000),
             items: itemsMigrasi,
             rekapHarian: parsed.rekapHarian || {},
             rekapMingguan: parsed.rekapMingguan || {},
@@ -800,11 +785,9 @@
     function simpanPengaturan() {
       const saldoBaru = parseAngka(document.getElementById('inputSaldo').value);
       const batasHarianBaru = parseAngka(document.getElementById('inputBatasHarian').value);
-      const batasBaru = parseAngka(document.getElementById('inputBatas').value);
 
       state.saldoAwal = saldoBaru;
       state.batasHarian = batasHarianBaru;
-      state.batasAman = batasBaru;
       simpanData();
       sinkronkanForm();
       render();
@@ -1063,12 +1046,6 @@
           'Peringatan Batas Harian: Pengeluaran hari ini (' + formatRp(terpakaiHariIni) +
           ') melebihi batas harian (' + formatRp(state.batasHarian) +
           ') sebesar ' + formatRp(terpakaiHariIni - state.batasHarian) + '.';
-      } else if (sisaSaldo <= state.batasAman) {
-        elSisa.classList.add('warn-text');
-        elPeringatan.classList.add('warn');
-        elPeringatan.textContent =
-          'Peringatan: Sisa saldo (' + formatRp(sisaSaldo) + ') sudah mencapai atau di bawah batas aman (' +
-          formatRp(state.batasAman) + ').';
       }
 
       renderStatistik();
@@ -1108,7 +1085,6 @@
     aktifkanFormatInputRibuan('nominal');
     aktifkanFormatInputRibuan('inputSaldo');
     aktifkanFormatInputRibuan('inputBatasHarian');
-    aktifkanFormatInputRibuan('inputBatas');
     muatData();
   </script>
 </body>

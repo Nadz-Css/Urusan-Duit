@@ -113,6 +113,20 @@
       margin: 0 0 10px;
     }
 
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      background: var(--sec-bg);
+      color: var(--sec-text);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
     .saldo-box {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -234,6 +248,21 @@
       transform: scale(1.1);
     }
 
+    .toggle-stat-btn {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0;
+      font-size: 0.85rem;
+      padding: 9px 12px;
+    }
+
+    .stat-drawer {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
     .tab-group {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -330,6 +359,14 @@
       color: var(--muted);
     }
 
+    .footer-watermark {
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--muted);
+      padding: 8px 0 16px;
+      letter-spacing: 0.02em;
+    }
+
     .hidden {
       display: none;
     }
@@ -349,8 +386,9 @@
           </span>
           <h1>Pelacak Pengeluaran</h1>
         </div>
-        <div style="display:flex; gap:6px;">
-          <button type="button" id="btnInstall" class="small hidden" onclick="installPWA()">Install App</button>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <a href="./kategori.html" class="nav-link">Kategori</a>
+          <button type="button" id="btnInstall" class="small hidden" onclick="installPWA()">Install</button>
           <button type="button" class="secondary small" onclick="togglePanelTampilan()">Tampilan</button>
         </div>
       </div>
@@ -456,10 +494,10 @@
       </form>
     </div>
 
-    <!-- Kartu Statistik Harian, Mingguan & Bulanan -->
+    <!-- Kartu Statistik (Buka / Tutup Rincian) -->
     <div class="card">
       <h2>Statistik Pengeluaran</h2>
-      <div class="saldo-box" style="margin-bottom: 12px;">
+      <div class="saldo-box" style="margin-bottom: 10px;">
         <div class="stat">
           <small>Hari Paling Boros</small>
           <strong id="hariTerboros">-</strong>
@@ -472,14 +510,20 @@
         </div>
       </div>
 
-      <div class="tab-group">
-        <button type="button" class="tab-btn active" id="tabHari" onclick="gantiTabStat('hari')">Per Hari (Sen-Min)</button>
-        <button type="button" class="tab-btn" id="tabTanggal" onclick="gantiTabStat('tanggal')">Rekap Harian</button>
-        <button type="button" class="tab-btn" id="tabMinggu" onclick="gantiTabStat('minggu')">Rekap Mingguan</button>
-        <button type="button" class="tab-btn" id="tabBulan" onclick="gantiTabStat('bulan')">Rekap Bulanan</button>
-      </div>
+      <button type="button" id="btnToggleStat" class="secondary toggle-stat-btn" onclick="toggleStatistikDetail()">
+        <span>Lihat Rincian (Harian / Mingguan / Bulanan)</span>
+        <span id="ikonToggleStat">▾</span>
+      </button>
 
-      <div id="kontenStatistik"></div>
+      <div id="panelStatistikDetail" class="stat-drawer hidden">
+        <div class="tab-group">
+          <button type="button" class="tab-btn active" id="tabHari" onclick="gantiTabStat('hari')">Per Hari (Sen-Min)</button>
+          <button type="button" class="tab-btn" id="tabTanggal" onclick="gantiTabStat('tanggal')">Rekap Harian</button>
+          <button type="button" class="tab-btn" id="tabMinggu" onclick="gantiTabStat('minggu')">Rekap Mingguan</button>
+          <button type="button" class="tab-btn" id="tabBulan" onclick="gantiTabStat('bulan')">Rekap Bulanan</button>
+        </div>
+        <div id="kontenStatistik"></div>
+      </div>
     </div>
 
     <!-- Riwayat Transaksi -->
@@ -495,6 +539,8 @@
       <input type="file" id="fileImpor" accept=".json,application/json" style="display:none;" onchange="imporBackup(event)" />
       <ul id="daftarRiwayat"></ul>
     </div>
+
+    <div class="footer-watermark">Nadz.dev X Gemini</div>
   </div>
 
   <script>
@@ -504,6 +550,7 @@
 
     let deferredPrompt = null;
     let tabAktif = 'hari';
+    let statDetailTerbuka = false;
 
     let state = {
       saldoAwal: 200000,
@@ -785,6 +832,23 @@
       document.getElementById('panelTampilan').classList.toggle('hidden');
     }
 
+    function toggleStatistikDetail() {
+      statDetailTerbuka = !statDetailTerbuka;
+      const panel = document.getElementById('panelStatistikDetail');
+      const ikon = document.getElementById('ikonToggleStat');
+      const labelBtn = document.querySelector('#btnToggleStat span:first-child');
+
+      panel.classList.toggle('hidden', !statDetailTerbuka);
+      ikon.textContent = statDetailTerbuka ? '▴' : '▾';
+      labelBtn.textContent = statDetailTerbuka
+        ? 'Tutup Rincian Grafik'
+        : 'Lihat Rincian (Harian / Mingguan / Bulanan)';
+
+      if (statDetailTerbuka) {
+        renderStatistik();
+      }
+    }
+
     function ubahTampilan() {
       state.tampilan.tema = document.getElementById('pilihTema').value;
       state.tampilan.ukuran = document.getElementById('pilihUkuran').value;
@@ -951,6 +1015,8 @@
         document.getElementById('tanggalTerboros').textContent = '-';
         document.getElementById('nominalTanggalTerboros').textContent = 'Rp0';
       }
+
+      if (!statDetailTerbuka) return;
 
       const container = document.getElementById('kontenStatistik');
       container.innerHTML = '';

@@ -10,7 +10,6 @@
   <meta name="apple-mobile-web-app-title" content="Catat Uang" />
   <link rel="manifest" href="./manifest.json" />
   <link rel="icon" type="image/svg+xml" href="./icon.svg" />
-  <link rel="shortcut icon" type="image/svg+xml" href="./icon.svg" />
   <link rel="apple-touch-icon" href="./icon.svg" />
   <title>Catat Pengeluaran</title>
   <style>
@@ -78,29 +77,6 @@
       align-items: center;
       margin-bottom: 12px;
       gap: 8px;
-    }
-
-    .brand-title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .logo-badge {
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
-      background: var(--accent);
-      color: var(--accent-text);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .logo-badge svg {
-      width: 20px;
-      height: 20px;
     }
 
     h1 {
@@ -227,6 +203,7 @@
       transform: scale(1.1);
     }
 
+    /* Statistik & Tab Rekap */
     .tab-group {
       display: flex;
       gap: 6px;
@@ -256,7 +233,6 @@
       justify-content: space-between;
       font-size: 0.85rem;
       margin-bottom: 4px;
-      gap: 6px;
     }
 
     .bar-track {
@@ -286,17 +262,6 @@
       padding: 1px 6px;
       border-radius: 6px;
       margin-left: 6px;
-      font-weight: 600;
-    }
-
-    .badge-over {
-      display: inline-block;
-      font-size: 0.7rem;
-      background: #fef3c7;
-      color: #b45309;
-      padding: 1px 6px;
-      border-radius: 6px;
-      margin-left: 4px;
       font-weight: 600;
     }
 
@@ -330,24 +295,16 @@
 </head>
 <body>
   <div class="app">
-    <!-- Ringkasan Saldo & Batas Harian -->
+    <!-- Ringkasan Saldo -->
     <div class="card">
       <div class="header-row">
-        <div class="brand-title">
-          <span class="logo-badge" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="5" width="20" height="14" rx="2"></rect>
-              <line x1="2" y1="10" x2="22" y2="10"></line>
-            </svg>
-          </span>
-          <h1>Pelacak Pengeluaran</h1>
-        </div>
+        <h1>Pelacak Pengeluaran</h1>
         <div style="display:flex; gap:6px;">
           <button type="button" id="btnInstall" class="small hidden" onclick="installPWA()">Install App</button>
           <button type="button" class="secondary small" onclick="togglePanelTampilan()">Tampilan</button>
         </div>
       </div>
-      <div class="saldo-box" style="margin-bottom:10px;">
+      <div class="saldo-box">
         <div class="stat">
           <small>Sisa Saldo</small>
           <strong id="sisaSaldo">Rp0</strong>
@@ -355,17 +312,6 @@
         <div class="stat">
           <small>Total Keluar</small>
           <strong id="totalKeluar">Rp0</strong>
-        </div>
-      </div>
-      <div class="saldo-box">
-        <div class="stat">
-          <small>Terpakai Hari Ini</small>
-          <strong id="terpakaiHariIni">Rp0</strong>
-          <small id="statusBatasHariIni" style="margin-top:2px;">Batas: Rp25.000</small>
-        </div>
-        <div class="stat">
-          <small>Sisa Jatah Hari Ini</small>
-          <strong id="sisaJatahHariIni">Rp0</strong>
         </div>
       </div>
     </div>
@@ -403,22 +349,20 @@
 
     <div id="peringatan" class="alert"></div>
 
-    <!-- Pengaturan Saldo, Batas Harian & Batas Saldo -->
+    <!-- Pengaturan Saldo -->
     <div class="card">
-      <h2>Atur Saldo &amp; Batas Maksimal</h2>
+      <h2>Atur Saldo &amp; Batas Aman</h2>
       <div class="row-inline">
         <div>
           <label for="inputSaldo">Saldo Awal (Rp)</label>
           <input type="number" id="inputSaldo" min="0" step="1000" placeholder="200000" />
         </div>
         <div>
-          <label for="inputBatasHarian">Batas Maksimal / Hari (Rp)</label>
-          <input type="number" id="inputBatasHarian" min="0" step="1000" placeholder="25000" />
+          <label for="inputBatas">Batas Peringatan (Rp)</label>
+          <input type="number" id="inputBatas" min="0" step="1000" placeholder="30000" />
         </div>
       </div>
-      <label for="inputBatas">Batas Peringatan Total Saldo (Rp)</label>
-      <input type="number" id="inputBatas" min="0" step="1000" placeholder="30000" />
-      <button type="button" onclick="simpanPengaturan()">Simpan Pengaturan</button>
+      <button type="button" onclick="simpanPengaturan()">Simpan Saldo &amp; Batas</button>
     </div>
 
     <!-- Form Catat Pengeluaran -->
@@ -501,7 +445,6 @@
 
     let state = {
       saldoAwal: 200000,
-      batasHarian: 25000,
       batasAman: 30000,
       items: [],
       rekapHarian: {},
@@ -513,6 +456,7 @@
       }
     };
 
+    // Registrasi Service Worker
     if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').catch((err) => {
@@ -563,15 +507,17 @@
       return NAMA_HARI[dt.getDay()];
     }
 
+    // Menghitung kunci minggu ISO (contoh: 2026-W48) beserta rentang tanggal Senin-Minggu
     function getInfoMinggu(isoStr) {
       const dt = parseTanggalLokal(isoStr);
-      const dayNum = dt.getDay() || 7;
+      const dayNum = dt.getDay() || 7; // Senin = 1 ... Minggu = 7
       const senin = new Date(dt);
       senin.setDate(dt.getDate() - dayNum + 1);
 
       const minggu = new Date(senin);
       minggu.setDate(senin.getDate() + 6);
 
+      // Hitung nomor minggu ISO
       const temp = new Date(Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()));
       const tempDay = temp.getUTCDay() || 7;
       temp.setUTCDate(temp.getUTCDate() + 4 - tempDay);
@@ -584,6 +530,7 @@
       return { key, label };
     }
 
+    // Menyusun ulang snapshot rekapHarian & rekapMingguan setiap kali data berubah
     function perbaruiRekapTersimpan() {
       const harian = {};
       const mingguan = {};
@@ -617,7 +564,6 @@
 
     function sinkronkanForm() {
       document.getElementById('inputSaldo').value = state.saldoAwal;
-      document.getElementById('inputBatasHarian').value = state.batasHarian;
       document.getElementById('inputBatas').value = state.batasAman;
       document.getElementById('pilihTema').value = state.tampilan.tema;
       document.getElementById('pilihUkuran').value = state.tampilan.ukuran;
@@ -640,7 +586,6 @@
 
           state = {
             saldoAwal: Number(parsed.saldoAwal ?? 200000),
-            batasHarian: Number(parsed.batasHarian ?? 25000),
             batasAman: Number(parsed.batasAman ?? 30000),
             items: itemsMigrasi,
             rekapHarian: parsed.rekapHarian || {},
@@ -711,7 +656,6 @@
 
           state = {
             saldoAwal: Number(parsed.saldoAwal ?? 200000),
-            batasHarian: Number(parsed.batasHarian ?? 25000),
             batasAman: Number(parsed.batasAman ?? 30000),
             items: itemsMigrasi,
             rekapHarian: parsed.rekapHarian || {},
@@ -727,7 +671,7 @@
           sinkronkanForm();
           terapkanTampilan();
           render();
-          alert('Data backup berhasil dipulihkan.');
+          alert('Data backup (termasuk rekap harian & mingguan) berhasil dipulihkan.');
         } catch (err) {
           alert('Gagal membaca file backup. Pastikan file berformat .json yang valid.');
         } finally {
@@ -774,20 +718,12 @@
 
     function simpanPengaturan() {
       const saldoBaru = Number(document.getElementById('inputSaldo').value);
-      const batasHarianBaru = Number(document.getElementById('inputBatasHarian').value);
       const batasBaru = Number(document.getElementById('inputBatas').value);
-
-      if (
-        Number.isNaN(saldoBaru) || saldoBaru < 0 ||
-        Number.isNaN(batasHarianBaru) || batasHarianBaru < 0 ||
-        Number.isNaN(batasBaru) || batasBaru < 0
-      ) {
+      if (Number.isNaN(saldoBaru) || saldoBaru < 0 || Number.isNaN(batasBaru) || batasBaru < 0) {
         alert('Masukkan angka yang valid (0 atau lebih).');
         return;
       }
-
       state.saldoAwal = saldoBaru;
-      state.batasHarian = batasHarianBaru;
       state.batasAman = batasBaru;
       simpanData();
       render();
@@ -805,24 +741,10 @@
       const totalKeluarSekarang = state.items.reduce((acc, item) => acc + item.nominal, 0);
       const sisaSetelahnya = state.saldoAwal - (totalKeluarSekarang + nominal);
 
-      const totalTanggalIni = state.items
-        .filter((it) => (it.tanggal || getTanggalHariIniISO()) === tanggal)
-        .reduce((acc, it) => acc + Number(it.nominal || 0), 0);
-      const totalTanggalSetelahnya = totalTanggalIni + nominal;
-
       if (sisaSetelahnya < 0) {
         const lanjut = confirm(
           'Peringatan: Pengeluaran ini melebihi saldo yang tersedia (sisa menjadi ' +
           formatRp(sisaSetelahnya) + '). Tetap catat?'
-        );
-        if (!lanjut) return;
-      } else if (state.batasHarian > 0 && totalTanggalSetelahnya > state.batasHarian) {
-        const selisih = totalTanggalSetelahnya - state.batasHarian;
-        const lanjut = confirm(
-          'Peringatan Batas Harian: Pengeluaran pada tanggal ' + tanggal +
-          ' menjadi ' + formatRp(totalTanggalSetelahnya) +
-          ' (melebihi batas harian ' + formatRp(state.batasHarian) +
-          ' sebesar ' + formatRp(selisih) + '). Tetap catat?'
         );
         if (!lanjut) return;
       }
@@ -882,6 +804,7 @@
         }
       });
 
+      // Cari hari dalam seminggu dengan pengeluaran terbesar
       let hariMax = '-';
       let nilaiHariMax = 0;
       URUTAN_HARI.forEach((h) => {
@@ -891,6 +814,7 @@
         }
       });
 
+      // Cari tanggal spesifik dengan pengeluaran terbesar
       const daftarHarian = Object.values(state.rekapHarian).sort((a, b) => b.tanggal.localeCompare(a.tanggal));
       let tglMaxObj = null;
       daftarHarian.forEach((rec) => {
@@ -942,11 +866,10 @@
           container.appendChild(row);
         });
       } else if (tabAktif === 'tanggal') {
-        const maxVal = Math.max(...daftarHarian.map((d) => d.total), state.batasHarian || 0, 1);
+        const maxVal = Math.max(...daftarHarian.map((d) => d.total), 1);
         daftarHarian.forEach((rec) => {
-          const persen = Math.min(100, Math.round((rec.total / maxVal) * 100));
+          const persen = Math.round((rec.total / maxVal) * 100);
           const isPeak = tglMaxObj && rec.tanggal === tglMaxObj.tanggal;
-          const isOverDaily = state.batasHarian > 0 && rec.total > state.batasHarian;
           const tglLabel = parseTanggalLokal(rec.tanggal).toLocaleDateString('id-ID', {
             day: 'numeric', month: 'short', year: 'numeric'
           });
@@ -955,11 +878,11 @@
           row.className = 'bar-row';
           row.innerHTML = `
             <div class="bar-label">
-              <span>${rec.hari}, ${tglLabel} (${rec.jumlahTransaksi}x)${isPeak ? '<span class="badge-peak">Tertinggi</span>' : ''}${isOverDaily ? '<span class="badge-over">Lewat Batas</span>' : ''}</span>
+              <span>${rec.hari}, ${tglLabel} (${rec.jumlahTransaksi}x)${isPeak ? '<span class="badge-peak">Tertinggi</span>' : ''}</span>
               <strong>${formatRp(rec.total)}</strong>
             </div>
             <div class="bar-track">
-              <div class="bar-fill ${isPeak || isOverDaily ? 'peak' : ''}" style="width:${persen}%"></div>
+              <div class="bar-fill ${isPeak ? 'peak' : ''}" style="width:${persen}%"></div>
             </div>
           `;
           container.appendChild(row);
@@ -992,57 +915,23 @@
       const totalKeluar = state.items.reduce((acc, item) => acc + item.nominal, 0);
       const sisaSaldo = state.saldoAwal - totalKeluar;
 
-      const hariIniISO = getTanggalHariIniISO();
-      const terpakaiHariIni = state.items
-        .filter((it) => (it.tanggal || hariIniISO) === hariIniISO)
-        .reduce((acc, it) => acc + Number(it.nominal || 0), 0);
-
-      const sisaJatahHariIni = state.batasHarian > 0 ? state.batasHarian - terpakaiHariIni : 0;
-
       const elSisa = document.getElementById('sisaSaldo');
       const elKeluar = document.getElementById('totalKeluar');
-      const elTerpakaiHari = document.getElementById('terpakaiHariIni');
-      const elSisaJatah = document.getElementById('sisaJatahHariIni');
-      const elStatusBatasHari = document.getElementById('statusBatasHariIni');
       const elPeringatan = document.getElementById('peringatan');
       const elList = document.getElementById('daftarRiwayat');
 
       elSisa.textContent = formatRp(sisaSaldo);
       elKeluar.textContent = formatRp(totalKeluar);
-      elTerpakaiHari.textContent = formatRp(terpakaiHariIni);
-      elStatusBatasHari.textContent = state.batasHarian > 0
-        ? 'Batas: ' + formatRp(state.batasHarian)
-        : 'Batas harian nonaktif';
-
-      if (state.batasHarian > 0) {
-        elSisaJatah.textContent = formatRp(sisaJatahHariIni);
-      } else {
-        elSisaJatah.textContent = 'Bebas';
-      }
 
       elSisa.classList.remove('danger', 'warn-text');
-      elTerpakaiHari.classList.remove('danger', 'warn-text');
-      elSisaJatah.classList.remove('danger', 'warn-text');
       elPeringatan.className = 'alert';
       elPeringatan.textContent = '';
-
-      const lewatBatasHariIni = state.batasHarian > 0 && terpakaiHariIni > state.batasHarian;
-      if (lewatBatasHariIni) {
-        elTerpakaiHari.classList.add('danger');
-        elSisaJatah.classList.add('danger');
-      }
 
       if (sisaSaldo < 0) {
         elSisa.classList.add('danger');
         elPeringatan.classList.add('over');
         elPeringatan.textContent =
           'Peringatan: Pengeluaran sudah melebihi saldo tersedia sebesar ' + formatRp(Math.abs(sisaSaldo)) + '.';
-      } else if (lewatBatasHariIni) {
-        elPeringatan.classList.add('warn');
-        elPeringatan.textContent =
-          'Peringatan Batas Harian: Pengeluaran hari ini (' + formatRp(terpakaiHariIni) +
-          ') melebihi batas harian (' + formatRp(state.batasHarian) +
-          ') sebesar ' + formatRp(terpakaiHariIni - state.batasHarian) + '.';
       } else if (sisaSaldo <= state.batasAman) {
         elSisa.classList.add('warn-text');
         elPeringatan.classList.add('warn');

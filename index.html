@@ -10,6 +10,7 @@
   <meta name="apple-mobile-web-app-title" content="Catat Uang" />
   <link rel="manifest" href="./manifest.json" />
   <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+  <link rel="shortcut icon" type="image/svg+xml" href="./icon.svg" />
   <link rel="apple-touch-icon" href="./icon.svg" />
   <title>Catat Pengeluaran</title>
   <style>
@@ -77,6 +78,29 @@
       align-items: center;
       margin-bottom: 12px;
       gap: 8px;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-badge {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: var(--accent);
+      color: var(--accent-text);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .logo-badge svg {
+      width: 20px;
+      height: 20px;
     }
 
     h1 {
@@ -309,7 +333,15 @@
     <!-- Ringkasan Saldo & Batas Harian -->
     <div class="card">
       <div class="header-row">
-        <h1>Pelacak Pengeluaran</h1>
+        <div class="brand-title">
+          <span class="logo-badge" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+              <line x1="2" y1="10" x2="22" y2="10"></line>
+            </svg>
+          </span>
+          <h1>Pelacak Pengeluaran</h1>
+        </div>
         <div style="display:flex; gap:6px;">
           <button type="button" id="btnInstall" class="small hidden" onclick="installPWA()">Install App</button>
           <button type="button" class="secondary small" onclick="togglePanelTampilan()">Tampilan</button>

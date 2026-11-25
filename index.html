@@ -58,7 +58,7 @@
     }
 
     .app {
-      max-width: 520px;
+      max-width: 540px;
       margin: 0 auto;
     }
 
@@ -105,11 +105,13 @@
     .stat small {
       color: var(--muted);
       display: block;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
     }
 
     .stat strong {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
+      display: block;
+      margin-top: 2px;
     }
 
     .danger { color: #ef4444; }
@@ -201,6 +203,79 @@
       transform: scale(1.1);
     }
 
+    .tab-group {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 8px;
+      font-size: 0.82rem;
+      margin: 0;
+      background: var(--sec-bg);
+      color: var(--sec-text);
+    }
+
+    .tab-btn.active {
+      background: var(--accent);
+      color: var(--accent-text);
+    }
+
+    .bar-row {
+      margin-bottom: 10px;
+    }
+
+    .bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+      gap: 6px;
+    }
+
+    .bar-track {
+      width: 100%;
+      height: 8px;
+      background: var(--sec-bg);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 999px;
+      transition: width 0.25s ease;
+    }
+
+    .bar-fill.peak {
+      background: #ef4444;
+    }
+
+    .badge-peak {
+      display: inline-block;
+      font-size: 0.7rem;
+      background: #fee2e2;
+      color: #b91c1c;
+      padding: 1px 6px;
+      border-radius: 6px;
+      margin-left: 6px;
+      font-weight: 600;
+    }
+
+    .badge-over {
+      display: inline-block;
+      font-size: 0.7rem;
+      background: #fef3c7;
+      color: #b45309;
+      padding: 1px 6px;
+      border-radius: 6px;
+      margin-left: 4px;
+      font-weight: 600;
+    }
+
     ul {
       list-style: none;
       padding: 0;
@@ -231,6 +306,7 @@
 </head>
 <body>
   <div class="app">
+    <!-- Ringkasan Saldo & Batas Harian -->
     <div class="card">
       <div class="header-row">
         <h1>Pelacak Pengeluaran</h1>
@@ -239,7 +315,7 @@
           <button type="button" class="secondary small" onclick="togglePanelTampilan()">Tampilan</button>
         </div>
       </div>
-      <div class="saldo-box">
+      <div class="saldo-box" style="margin-bottom:10px;">
         <div class="stat">
           <small>Sisa Saldo</small>
           <strong id="sisaSaldo">Rp0</strong>
@@ -249,8 +325,20 @@
           <strong id="totalKeluar">Rp0</strong>
         </div>
       </div>
+      <div class="saldo-box">
+        <div class="stat">
+          <small>Terpakai Hari Ini</small>
+          <strong id="terpakaiHariIni">Rp0</strong>
+          <small id="statusBatasHariIni" style="margin-top:2px;">Batas: Rp25.000</small>
+        </div>
+        <div class="stat">
+          <small>Sisa Jatah Hari Ini</small>
+          <strong id="sisaJatahHariIni">Rp0</strong>
+        </div>
+      </div>
     </div>
 
+    <!-- Pengaturan Tampilan -->
     <div id="panelTampilan" class="card hidden">
       <h2>Pengaturan Tampilan</h2>
       <div class="row-inline">
@@ -283,26 +371,38 @@
 
     <div id="peringatan" class="alert"></div>
 
+    <!-- Pengaturan Saldo, Batas Harian & Batas Saldo -->
     <div class="card">
-      <h2>Atur Saldo &amp; Batas Aman</h2>
+      <h2>Atur Saldo &amp; Batas Maksimal</h2>
       <div class="row-inline">
         <div>
           <label for="inputSaldo">Saldo Awal (Rp)</label>
           <input type="number" id="inputSaldo" min="0" step="1000" placeholder="200000" />
         </div>
         <div>
-          <label for="inputBatas">Batas Peringatan (Rp)</label>
-          <input type="number" id="inputBatas" min="0" step="1000" placeholder="30000" />
+          <label for="inputBatasHarian">Batas Maksimal / Hari (Rp)</label>
+          <input type="number" id="inputBatasHarian" min="0" step="1000" placeholder="25000" />
         </div>
       </div>
-      <button type="button" onclick="simpanPengaturan()">Simpan Saldo &amp; Batas</button>
+      <label for="inputBatas">Batas Peringatan Total Saldo (Rp)</label>
+      <input type="number" id="inputBatas" min="0" step="1000" placeholder="30000" />
+      <button type="button" onclick="simpanPengaturan()">Simpan Pengaturan</button>
     </div>
 
+    <!-- Form Catat Pengeluaran -->
     <div class="card">
       <h2>Catat Pengeluaran</h2>
       <form id="formPengeluaran" onsubmit="tambahPengeluaran(event)">
-        <label for="nominal">Nominal (Rp)</label>
-        <input type="number" id="nominal" min="1" required placeholder="15000" />
+        <div class="row-inline">
+          <div>
+            <label for="nominal">Nominal (Rp)</label>
+            <input type="number" id="nominal" min="1" required placeholder="15000" />
+          </div>
+          <div>
+            <label for="tanggalInput">Tanggal</label>
+            <input type="date" id="tanggalInput" required />
+          </div>
+        </div>
 
         <label for="kategori">Kategori</label>
         <select id="kategori">
@@ -319,6 +419,32 @@
       </form>
     </div>
 
+    <!-- Kartu Statistik Harian & Mingguan -->
+    <div class="card">
+      <h2>Statistik Pengeluaran</h2>
+      <div class="saldo-box" style="margin-bottom: 12px;">
+        <div class="stat">
+          <small>Hari Paling Boros</small>
+          <strong id="hariTerboros">-</strong>
+          <small id="nominalHariTerboros" style="margin-top:2px;">Rp0</small>
+        </div>
+        <div class="stat">
+          <small>Tanggal Paling Boros</small>
+          <strong id="tanggalTerboros">-</strong>
+          <small id="nominalTanggalTerboros" style="margin-top:2px;">Rp0</small>
+        </div>
+      </div>
+
+      <div class="tab-group">
+        <button type="button" class="tab-btn active" id="tabHari" onclick="gantiTabStat('hari')">Per Hari (Sen-Min)</button>
+        <button type="button" class="tab-btn" id="tabTanggal" onclick="gantiTabStat('tanggal')">Rekap Harian</button>
+        <button type="button" class="tab-btn" id="tabMinggu" onclick="gantiTabStat('minggu')">Rekap Mingguan</button>
+      </div>
+
+      <div id="kontenStatistik"></div>
+    </div>
+
+    <!-- Riwayat Transaksi -->
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:6px; flex-wrap:wrap;">
         <h2 style="margin:0;">Riwayat</h2>
@@ -335,12 +461,19 @@
 
   <script>
     const STORAGE_KEY = 'pengeluaran_harian_v2';
+    const NAMA_HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const URUTAN_HARI = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+
     let deferredPrompt = null;
+    let tabAktif = 'hari';
 
     let state = {
       saldoAwal: 200000,
+      batasHarian: 25000,
       batasAman: 30000,
       items: [],
+      rekapHarian: {},
+      rekapMingguan: {},
       tampilan: {
         tema: 'light',
         ukuran: '16px',
@@ -348,7 +481,6 @@
       }
     };
 
-    // Registrasi Service Worker
     if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').catch((err) => {
@@ -357,7 +489,6 @@
       });
     }
 
-    // Tangkap event install PWA dari browser
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
@@ -381,11 +512,84 @@
       return 'Rp' + Number(angka || 0).toLocaleString('id-ID');
     }
 
+    function getTanggalHariIniISO() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function parseTanggalLokal(isoStr) {
+      if (!isoStr || !/^\d{4}-\d{2}-\d{2}$/.test(isoStr)) return new Date();
+      const [y, m, d] = isoStr.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function getNamaHariDariISO(isoStr) {
+      const dt = parseTanggalLokal(isoStr);
+      return NAMA_HARI[dt.getDay()];
+    }
+
+    function getInfoMinggu(isoStr) {
+      const dt = parseTanggalLokal(isoStr);
+      const dayNum = dt.getDay() || 7;
+      const senin = new Date(dt);
+      senin.setDate(dt.getDate() - dayNum + 1);
+
+      const minggu = new Date(senin);
+      minggu.setDate(senin.getDate() + 6);
+
+      const temp = new Date(Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()));
+      const tempDay = temp.getUTCDay() || 7;
+      temp.setUTCDate(temp.getUTCDate() + 4 - tempDay);
+      const yearStart = new Date(Date.UTC(temp.getUTCFullYear(), 0, 1));
+      const weekNo = Math.ceil((((temp - yearStart) / 86400000) + 1) / 7);
+      const key = `${temp.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+
+      const fmt = (d) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+      const label = `Minggu ke-${weekNo} (${fmt(senin)} – ${fmt(minggu)})`;
+      return { key, label };
+    }
+
+    function perbaruiRekapTersimpan() {
+      const harian = {};
+      const mingguan = {};
+
+      state.items.forEach((item) => {
+        const tgl = item.tanggal || getTanggalHariIniISO();
+        const hari = item.hari || getNamaHariDariISO(tgl);
+        const infoMinggu = getInfoMinggu(tgl);
+
+        if (!harian[tgl]) {
+          harian[tgl] = { tanggal: tgl, hari, total: 0, jumlahTransaksi: 0 };
+        }
+        harian[tgl].total += Number(item.nominal || 0);
+        harian[tgl].jumlahTransaksi += 1;
+
+        if (!mingguan[infoMinggu.key]) {
+          mingguan[infoMinggu.key] = {
+            kode: infoMinggu.key,
+            label: infoMinggu.label,
+            total: 0,
+            jumlahTransaksi: 0
+          };
+        }
+        mingguan[infoMinggu.key].total += Number(item.nominal || 0);
+        mingguan[infoMinggu.key].jumlahTransaksi += 1;
+      });
+
+      state.rekapHarian = harian;
+      state.rekapMingguan = mingguan;
+    }
+
     function sinkronkanForm() {
       document.getElementById('inputSaldo').value = state.saldoAwal;
+      document.getElementById('inputBatasHarian').value = state.batasHarian;
       document.getElementById('inputBatas').value = state.batasAman;
       document.getElementById('pilihTema').value = state.tampilan.tema;
       document.getElementById('pilihUkuran').value = state.tampilan.ukuran;
+      document.getElementById('tanggalInput').value = getTanggalHariIniISO();
     }
 
     function muatData() {
@@ -393,10 +597,22 @@
       if (tersimpan) {
         try {
           const parsed = JSON.parse(tersimpan);
+          const itemsMigrasi = (Array.isArray(parsed.items) ? parsed.items : []).map((it) => {
+            const tgl = it.tanggal || (it.id ? new Date(it.id).toISOString().slice(0, 10) : getTanggalHariIniISO());
+            return {
+              ...it,
+              tanggal: tgl,
+              hari: it.hari || getNamaHariDariISO(tgl)
+            };
+          });
+
           state = {
             saldoAwal: Number(parsed.saldoAwal ?? 200000),
+            batasHarian: Number(parsed.batasHarian ?? 25000),
             batasAman: Number(parsed.batasAman ?? 30000),
-            items: Array.isArray(parsed.items) ? parsed.items : [],
+            items: itemsMigrasi,
+            rekapHarian: parsed.rekapHarian || {},
+            rekapMingguan: parsed.rekapMingguan || {},
             tampilan: {
               tema: parsed.tampilan?.tema || 'light',
               ukuran: parsed.tampilan?.ukuran || '16px',
@@ -408,20 +624,24 @@
         }
       }
 
+      perbaruiRekapTersimpan();
+      simpanData();
       sinkronkanForm();
       terapkanTampilan();
       render();
     }
 
     function simpanData() {
+      perbaruiRekapTersimpan();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
 
     function eksporBackup() {
+      perbaruiRekapTersimpan();
       const dataStr = JSON.stringify(state, null, 2);
       const blob = new Blob([dataStr], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
-      const tanggal = new Date().toISOString().slice(0, 10);
+      const tanggal = getTanggalHariIniISO();
       const link = document.createElement('a');
       link.href = url;
       link.download = 'backup-pengeluaran-' + tanggal + '.json';
@@ -448,10 +668,22 @@
             return;
           }
 
+          const itemsMigrasi = parsed.items.map((it) => {
+            const tgl = it.tanggal || getTanggalHariIniISO();
+            return {
+              ...it,
+              tanggal: tgl,
+              hari: it.hari || getNamaHariDariISO(tgl)
+            };
+          });
+
           state = {
             saldoAwal: Number(parsed.saldoAwal ?? 200000),
+            batasHarian: Number(parsed.batasHarian ?? 25000),
             batasAman: Number(parsed.batasAman ?? 30000),
-            items: parsed.items,
+            items: itemsMigrasi,
+            rekapHarian: parsed.rekapHarian || {},
+            rekapMingguan: parsed.rekapMingguan || {},
             tampilan: {
               tema: parsed.tampilan?.tema || 'light',
               ukuran: parsed.tampilan?.ukuran || '16px',
@@ -510,12 +742,20 @@
 
     function simpanPengaturan() {
       const saldoBaru = Number(document.getElementById('inputSaldo').value);
+      const batasHarianBaru = Number(document.getElementById('inputBatasHarian').value);
       const batasBaru = Number(document.getElementById('inputBatas').value);
-      if (Number.isNaN(saldoBaru) || saldoBaru < 0 || Number.isNaN(batasBaru) || batasBaru < 0) {
+
+      if (
+        Number.isNaN(saldoBaru) || saldoBaru < 0 ||
+        Number.isNaN(batasHarianBaru) || batasHarianBaru < 0 ||
+        Number.isNaN(batasBaru) || batasBaru < 0
+      ) {
         alert('Masukkan angka yang valid (0 atau lebih).');
         return;
       }
+
       state.saldoAwal = saldoBaru;
+      state.batasHarian = batasHarianBaru;
       state.batasAman = batasBaru;
       simpanData();
       render();
@@ -524,6 +764,7 @@
     function tambahPengeluaran(event) {
       event.preventDefault();
       const nominal = Number(document.getElementById('nominal').value);
+      const tanggal = document.getElementById('tanggalInput').value || getTanggalHariIniISO();
       const kategori = document.getElementById('kategori').value;
       const catatan = document.getElementById('catatan').value.trim();
 
@@ -532,24 +773,45 @@
       const totalKeluarSekarang = state.items.reduce((acc, item) => acc + item.nominal, 0);
       const sisaSetelahnya = state.saldoAwal - (totalKeluarSekarang + nominal);
 
+      const totalTanggalIni = state.items
+        .filter((it) => (it.tanggal || getTanggalHariIniISO()) === tanggal)
+        .reduce((acc, it) => acc + Number(it.nominal || 0), 0);
+      const totalTanggalSetelahnya = totalTanggalIni + nominal;
+
       if (sisaSetelahnya < 0) {
         const lanjut = confirm(
           'Peringatan: Pengeluaran ini melebihi saldo yang tersedia (sisa menjadi ' +
           formatRp(sisaSetelahnya) + '). Tetap catat?'
         );
         if (!lanjut) return;
+      } else if (state.batasHarian > 0 && totalTanggalSetelahnya > state.batasHarian) {
+        const selisih = totalTanggalSetelahnya - state.batasHarian;
+        const lanjut = confirm(
+          'Peringatan Batas Harian: Pengeluaran pada tanggal ' + tanggal +
+          ' menjadi ' + formatRp(totalTanggalSetelahnya) +
+          ' (melebihi batas harian ' + formatRp(state.batasHarian) +
+          ' sebesar ' + formatRp(selisih) + '). Tetap catat?'
+        );
+        if (!lanjut) return;
       }
+
+      const hari = getNamaHariDariISO(tanggal);
+      const jamSekarang = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
       state.items.unshift({
         id: Date.now(),
         nominal,
+        tanggal,
+        hari,
         kategori,
         catatan,
-        waktu: new Date().toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })
+        waktu: `${hari}, ${parseTanggalLokal(tanggal).toLocaleDateString('id-ID')} · ${jamSekarang}`
       });
 
       simpanData();
-      document.getElementById('formPengeluaran').reset();
+      document.getElementById('nominal').value = '';
+      document.getElementById('catatan').value = '';
+      document.getElementById('tanggalInput').value = tanggal;
       render();
     }
 
@@ -560,33 +822,195 @@
     }
 
     function resetSemua() {
-      if (!confirm('Hapus semua riwayat pengeluaran?')) return;
+      if (!confirm('Hapus semua riwayat, rekap harian, dan rekap mingguan?')) return;
       state.items = [];
+      state.rekapHarian = {};
+      state.rekapMingguan = {};
       simpanData();
       render();
+    }
+
+    function gantiTabStat(tab) {
+      tabAktif = tab;
+      document.getElementById('tabHari').classList.toggle('active', tab === 'hari');
+      document.getElementById('tabTanggal').classList.toggle('active', tab === 'tanggal');
+      document.getElementById('tabMinggu').classList.toggle('active', tab === 'minggu');
+      renderStatistik();
+    }
+
+    function renderStatistik() {
+      const totalPerHari = {
+        Senin: 0, Selasa: 0, Rabu: 0, Kamis: 0, Jumat: 0, Sabtu: 0, Minggu: 0
+      };
+
+      state.items.forEach((item) => {
+        const h = item.hari || getNamaHariDariISO(item.tanggal);
+        if (Object.prototype.hasOwnProperty.call(totalPerHari, h)) {
+          totalPerHari[h] += Number(item.nominal || 0);
+        }
+      });
+
+      let hariMax = '-';
+      let nilaiHariMax = 0;
+      URUTAN_HARI.forEach((h) => {
+        if (totalPerHari[h] > nilaiHariMax) {
+          nilaiHariMax = totalPerHari[h];
+          hariMax = h;
+        }
+      });
+
+      const daftarHarian = Object.values(state.rekapHarian).sort((a, b) => b.tanggal.localeCompare(a.tanggal));
+      let tglMaxObj = null;
+      daftarHarian.forEach((rec) => {
+        if (!tglMaxObj || rec.total > tglMaxObj.total) {
+          tglMaxObj = rec;
+        }
+      });
+
+      document.getElementById('hariTerboros').textContent = nilaiHariMax > 0 ? hariMax : '-';
+      document.getElementById('nominalHariTerboros').textContent = formatRp(nilaiHariMax);
+
+      if (tglMaxObj && tglMaxObj.total > 0) {
+        const tglFmt = parseTanggalLokal(tglMaxObj.tanggal).toLocaleDateString('id-ID', {
+          day: 'numeric', month: 'short'
+        });
+        document.getElementById('tanggalTerboros').textContent = `${tglMaxObj.hari}, ${tglFmt}`;
+        document.getElementById('nominalTanggalTerboros').textContent = formatRp(tglMaxObj.total);
+      } else {
+        document.getElementById('tanggalTerboros').textContent = '-';
+        document.getElementById('nominalTanggalTerboros').textContent = 'Rp0';
+      }
+
+      const container = document.getElementById('kontenStatistik');
+      container.innerHTML = '';
+
+      if (state.items.length === 0) {
+        container.innerHTML = '<small style="color:var(--muted);">Belum ada data untuk dihitung statistiknya.</small>';
+        return;
+      }
+
+      if (tabAktif === 'hari') {
+        const maxVal = Math.max(...Object.values(totalPerHari), 1);
+        URUTAN_HARI.forEach((h) => {
+          const val = totalPerHari[h];
+          const persen = Math.round((val / maxVal) * 100);
+          const isPeak = val > 0 && val === nilaiHariMax;
+
+          const row = document.createElement('div');
+          row.className = 'bar-row';
+          row.innerHTML = `
+            <div class="bar-label">
+              <span>${h}${isPeak ? '<span class="badge-peak">Tertinggi</span>' : ''}</span>
+              <strong>${formatRp(val)}</strong>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill ${isPeak ? 'peak' : ''}" style="width:${persen}%"></div>
+            </div>
+          `;
+          container.appendChild(row);
+        });
+      } else if (tabAktif === 'tanggal') {
+        const maxVal = Math.max(...daftarHarian.map((d) => d.total), state.batasHarian || 0, 1);
+        daftarHarian.forEach((rec) => {
+          const persen = Math.min(100, Math.round((rec.total / maxVal) * 100));
+          const isPeak = tglMaxObj && rec.tanggal === tglMaxObj.tanggal;
+          const isOverDaily = state.batasHarian > 0 && rec.total > state.batasHarian;
+          const tglLabel = parseTanggalLokal(rec.tanggal).toLocaleDateString('id-ID', {
+            day: 'numeric', month: 'short', year: 'numeric'
+          });
+
+          const row = document.createElement('div');
+          row.className = 'bar-row';
+          row.innerHTML = `
+            <div class="bar-label">
+              <span>${rec.hari}, ${tglLabel} (${rec.jumlahTransaksi}x)${isPeak ? '<span class="badge-peak">Tertinggi</span>' : ''}${isOverDaily ? '<span class="badge-over">Lewat Batas</span>' : ''}</span>
+              <strong>${formatRp(rec.total)}</strong>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill ${isPeak || isOverDaily ? 'peak' : ''}" style="width:${persen}%"></div>
+            </div>
+          `;
+          container.appendChild(row);
+        });
+      } else if (tabAktif === 'minggu') {
+        const daftarMingguan = Object.values(state.rekapMingguan).sort((a, b) => b.kode.localeCompare(a.kode));
+        const maxVal = Math.max(...daftarMingguan.map((m) => m.total), 1);
+
+        daftarMingguan.forEach((rec) => {
+          const persen = Math.round((rec.total / maxVal) * 100);
+          const isPeak = rec.total === maxVal && rec.total > 0;
+
+          const row = document.createElement('div');
+          row.className = 'bar-row';
+          row.innerHTML = `
+            <div class="bar-label">
+              <span>${rec.label} (${rec.jumlahTransaksi}x)${isPeak ? '<span class="badge-peak">Tertinggi</span>' : ''}</span>
+              <strong>${formatRp(rec.total)}</strong>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill ${isPeak ? 'peak' : ''}" style="width:${persen}%"></div>
+            </div>
+          `;
+          container.appendChild(row);
+        });
+      }
     }
 
     function render() {
       const totalKeluar = state.items.reduce((acc, item) => acc + item.nominal, 0);
       const sisaSaldo = state.saldoAwal - totalKeluar;
 
+      const hariIniISO = getTanggalHariIniISO();
+      const terpakaiHariIni = state.items
+        .filter((it) => (it.tanggal || hariIniISO) === hariIniISO)
+        .reduce((acc, it) => acc + Number(it.nominal || 0), 0);
+
+      const sisaJatahHariIni = state.batasHarian > 0 ? state.batasHarian - terpakaiHariIni : 0;
+
       const elSisa = document.getElementById('sisaSaldo');
       const elKeluar = document.getElementById('totalKeluar');
+      const elTerpakaiHari = document.getElementById('terpakaiHariIni');
+      const elSisaJatah = document.getElementById('sisaJatahHariIni');
+      const elStatusBatasHari = document.getElementById('statusBatasHariIni');
       const elPeringatan = document.getElementById('peringatan');
       const elList = document.getElementById('daftarRiwayat');
 
       elSisa.textContent = formatRp(sisaSaldo);
       elKeluar.textContent = formatRp(totalKeluar);
+      elTerpakaiHari.textContent = formatRp(terpakaiHariIni);
+      elStatusBatasHari.textContent = state.batasHarian > 0
+        ? 'Batas: ' + formatRp(state.batasHarian)
+        : 'Batas harian nonaktif';
+
+      if (state.batasHarian > 0) {
+        elSisaJatah.textContent = formatRp(sisaJatahHariIni);
+      } else {
+        elSisaJatah.textContent = 'Bebas';
+      }
 
       elSisa.classList.remove('danger', 'warn-text');
+      elTerpakaiHari.classList.remove('danger', 'warn-text');
+      elSisaJatah.classList.remove('danger', 'warn-text');
       elPeringatan.className = 'alert';
       elPeringatan.textContent = '';
+
+      const lewatBatasHariIni = state.batasHarian > 0 && terpakaiHariIni > state.batasHarian;
+      if (lewatBatasHariIni) {
+        elTerpakaiHari.classList.add('danger');
+        elSisaJatah.classList.add('danger');
+      }
 
       if (sisaSaldo < 0) {
         elSisa.classList.add('danger');
         elPeringatan.classList.add('over');
         elPeringatan.textContent =
           'Peringatan: Pengeluaran sudah melebihi saldo tersedia sebesar ' + formatRp(Math.abs(sisaSaldo)) + '.';
+      } else if (lewatBatasHariIni) {
+        elPeringatan.classList.add('warn');
+        elPeringatan.textContent =
+          'Peringatan Batas Harian: Pengeluaran hari ini (' + formatRp(terpakaiHariIni) +
+          ') melebihi batas harian (' + formatRp(state.batasHarian) +
+          ') sebesar ' + formatRp(terpakaiHariIni - state.batasHarian) + '.';
       } else if (sisaSaldo <= state.batasAman) {
         elSisa.classList.add('warn-text');
         elPeringatan.classList.add('warn');
@@ -594,6 +1018,8 @@
           'Peringatan: Sisa saldo (' + formatRp(sisaSaldo) + ') sudah mencapai atau di bawah batas aman (' +
           formatRp(state.batasAman) + ').';
       }
+
+      renderStatistik();
 
       if (state.items.length === 0) {
         elList.innerHTML = '<li><span style="color:var(--muted);">Belum ada pengeluaran tercatat.</span></li>';

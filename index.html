@@ -409,15 +409,15 @@
       <div class="row-inline">
         <div>
           <label for="inputSaldo">Saldo Awal (Rp)</label>
-          <input type="number" id="inputSaldo" min="0" step="1000" placeholder="200000" />
+          <input type="text" inputmode="numeric" id="inputSaldo" placeholder="200.000" />
         </div>
         <div>
           <label for="inputBatasHarian">Batas Maksimal / Hari (Rp)</label>
-          <input type="number" id="inputBatasHarian" min="0" step="1000" placeholder="25000" />
+          <input type="text" inputmode="numeric" id="inputBatasHarian" placeholder="25.000" />
         </div>
       </div>
       <label for="inputBatas">Batas Peringatan Total Saldo (Rp)</label>
-      <input type="number" id="inputBatas" min="0" step="1000" placeholder="30000" />
+      <input type="text" inputmode="numeric" id="inputBatas" placeholder="30.000" />
       <button type="button" onclick="simpanPengaturan()">Simpan Pengaturan</button>
     </div>
 
@@ -428,7 +428,7 @@
         <div class="row-inline">
           <div>
             <label for="nominal">Nominal (Rp)</label>
-            <input type="number" id="nominal" min="1" required placeholder="15000" />
+            <input type="text" inputmode="numeric" id="nominal" required placeholder="14.000" />
           </div>
           <div>
             <label for="tanggalInput">Tanggal</label>
@@ -540,8 +540,31 @@
       document.getElementById('btnInstall').classList.add('hidden');
     }
 
+    // Mengambil angka murni dari string input (menghapus titik/spasi/karakter non-digit)
+    function parseAngka(val) {
+      const digits = String(val ?? '').replace(/\D/g, '');
+      return digits ? Number(digits) : 0;
+    }
+
+    // Memformat angka menjadi format ribuan Indonesia (contoh: 14000 -> "14.000")
+    function formatRibuan(angka) {
+      const n = parseAngka(angka);
+      if (!n && String(angka ?? '').replace(/\D/g, '') === '') return '';
+      return n.toLocaleString('id-ID');
+    }
+
     function formatRp(angka) {
       return 'Rp' + Number(angka || 0).toLocaleString('id-ID');
+    }
+
+    // Memasang pemformat titik otomatis saat mengetik pada input nominal/saldo
+    function aktifkanFormatInputRibuan(inputId) {
+      const el = document.getElementById(inputId);
+      if (!el) return;
+      el.addEventListener('input', () => {
+        const angka = parseAngka(el.value);
+        el.value = angka > 0 ? angka.toLocaleString('id-ID') : '';
+      });
     }
 
     function getTanggalHariIniISO() {
@@ -616,9 +639,9 @@
     }
 
     function sinkronkanForm() {
-      document.getElementById('inputSaldo').value = state.saldoAwal;
-      document.getElementById('inputBatasHarian').value = state.batasHarian;
-      document.getElementById('inputBatas').value = state.batasAman;
+      document.getElementById('inputSaldo').value = state.saldoAwal > 0 ? state.saldoAwal.toLocaleString('id-ID') : '0';
+      document.getElementById('inputBatasHarian').value = state.batasHarian > 0 ? state.batasHarian.toLocaleString('id-ID') : '0';
+      document.getElementById('inputBatas').value = state.batasAman > 0 ? state.batasAman.toLocaleString('id-ID') : '0';
       document.getElementById('pilihTema').value = state.tampilan.tema;
       document.getElementById('pilihUkuran').value = state.tampilan.ukuran;
       document.getElementById('tanggalInput').value = getTanggalHariIniISO();
@@ -633,6 +656,7 @@
             const tgl = it.tanggal || (it.id ? new Date(it.id).toISOString().slice(0, 10) : getTanggalHariIniISO());
             return {
               ...it,
+              nominal: Number(it.nominal || 0),
               tanggal: tgl,
               hari: it.hari || getNamaHariDariISO(tgl)
             };
@@ -704,6 +728,7 @@
             const tgl = it.tanggal || getTanggalHariIniISO();
             return {
               ...it,
+              nominal: Number(it.nominal || 0),
               tanggal: tgl,
               hari: it.hari || getNamaHariDariISO(tgl)
             };
@@ -773,36 +798,31 @@
     }
 
     function simpanPengaturan() {
-      const saldoBaru = Number(document.getElementById('inputSaldo').value);
-      const batasHarianBaru = Number(document.getElementById('inputBatasHarian').value);
-      const batasBaru = Number(document.getElementById('inputBatas').value);
-
-      if (
-        Number.isNaN(saldoBaru) || saldoBaru < 0 ||
-        Number.isNaN(batasHarianBaru) || batasHarianBaru < 0 ||
-        Number.isNaN(batasBaru) || batasBaru < 0
-      ) {
-        alert('Masukkan angka yang valid (0 atau lebih).');
-        return;
-      }
+      const saldoBaru = parseAngka(document.getElementById('inputSaldo').value);
+      const batasHarianBaru = parseAngka(document.getElementById('inputBatasHarian').value);
+      const batasBaru = parseAngka(document.getElementById('inputBatas').value);
 
       state.saldoAwal = saldoBaru;
       state.batasHarian = batasHarianBaru;
       state.batasAman = batasBaru;
       simpanData();
+      sinkronkanForm();
       render();
     }
 
     function tambahPengeluaran(event) {
       event.preventDefault();
-      const nominal = Number(document.getElementById('nominal').value);
+      const nominal = parseAngka(document.getElementById('nominal').value);
       const tanggal = document.getElementById('tanggalInput').value || getTanggalHariIniISO();
       const kategori = document.getElementById('kategori').value;
       const catatan = document.getElementById('catatan').value.trim();
 
-      if (!nominal || nominal <= 0) return;
+      if (!nominal || nominal <= 0) {
+        alert('Masukkan nominal yang lebih dari 0.');
+        return;
+      }
 
-      const totalKeluarSekarang = state.items.reduce((acc, item) => acc + item.nominal, 0);
+      const totalKeluarSekarang = state.items.reduce((acc, item) => acc + Number(item.nominal || 0), 0);
       const sisaSetelahnya = state.saldoAwal - (totalKeluarSekarang + nominal);
 
       const totalTanggalIni = state.items
@@ -989,7 +1009,7 @@
     }
 
     function render() {
-      const totalKeluar = state.items.reduce((acc, item) => acc + item.nominal, 0);
+      const totalKeluar = state.items.reduce((acc, item) => acc + Number(item.nominal || 0), 0);
       const sisaSaldo = state.saldoAwal - totalKeluar;
 
       const hariIniISO = getTanggalHariIniISO();
@@ -1085,6 +1105,10 @@
       });
     }
 
+    aktifkanFormatInputRibuan('nominal');
+    aktifkanFormatInputRibuan('inputSaldo');
+    aktifkanFormatInputRibuan('inputBatasHarian');
+    aktifkanFormatInputRibuan('inputBatas');
     muatData();
   </script>
 </body>

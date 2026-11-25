@@ -235,13 +235,13 @@
     }
 
     .tab-group {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 6px;
       margin-bottom: 12px;
     }
 
     .tab-btn {
-      flex: 1;
       padding: 8px;
       font-size: 0.82rem;
       margin: 0;
@@ -337,7 +337,7 @@
 </head>
 <body>
   <div class="app">
-    <!-- Ringkasan Saldo & Batas Harian -->
+    <!-- Ringkasan Saldo, Batas Harian & Total Bulanan -->
     <div class="card">
       <div class="header-row">
         <div class="brand-title">
@@ -360,8 +360,8 @@
           <strong id="sisaSaldo">Rp0</strong>
         </div>
         <div class="stat">
-          <small>Total Keluar</small>
-          <strong id="totalKeluar">Rp0</strong>
+          <small id="labelTotalBulanan">Total Bulan Ini</small>
+          <strong id="totalBulanan">Rp0</strong>
         </div>
       </div>
       <div class="saldo-box">
@@ -416,11 +416,11 @@
       <div class="row-inline">
         <div>
           <label for="inputSaldo">Saldo Awal (Rp)</label>
-          <input type="text" inputmode="numeric" id="inputSaldo" placeholder="200.000" />
+          <input type="text" inputmode="numeric" id="inputSaldo" placeholder="800.000" />
         </div>
         <div>
-          <label for="inputBatasHarian">Batas Harian (Rp)</label>
-          <input type="text" inputmode="numeric" id="inputBatasHarian" placeholder="25.000" />
+          <label for="inputBatasHarian">Batas Maksimal / Hari (Rp)</label>
+          <input type="text" inputmode="numeric" id="inputBatasHarian" placeholder="22.000" />
         </div>
       </div>
       <button type="button" onclick="simpanPengaturan()">Simpan Pengaturan</button>
@@ -437,7 +437,7 @@
           </div>
           <div>
             <label for="tanggalInput">Tanggal</label>
-            <input type="date" id="tanggalInput" required />
+            <input type="date" id="tanggalInput" required onchange="render()" />
           </div>
         </div>
 
@@ -446,18 +446,17 @@
           <option value="Makan">Makan</option>
           <option value="Jajan">Jajan / Snack</option>
           <option value="Bensin">Bensin</option>
-          <option value="Lainnya">Obat</option>
           <option value="Lainnya">Lainnya</option>
         </select>
 
         <label for="catatan">Catatan (Opsional)</label>
-        <input type="text" id="catatan" placeholder="Contoh: cilok, air galon" />
+        <input type="text" id="catatan" placeholder="Contoh: beras, galon, cilok" />
 
         <button type="submit">Simpan Pengeluaran</button>
       </form>
     </div>
 
-    <!-- Kartu Statistik Harian & Mingguan -->
+    <!-- Kartu Statistik Harian, Mingguan & Bulanan -->
     <div class="card">
       <h2>Statistik Pengeluaran</h2>
       <div class="saldo-box" style="margin-bottom: 12px;">
@@ -477,6 +476,7 @@
         <button type="button" class="tab-btn active" id="tabHari" onclick="gantiTabStat('hari')">Per Hari (Sen-Min)</button>
         <button type="button" class="tab-btn" id="tabTanggal" onclick="gantiTabStat('tanggal')">Rekap Harian</button>
         <button type="button" class="tab-btn" id="tabMinggu" onclick="gantiTabStat('minggu')">Rekap Mingguan</button>
+        <button type="button" class="tab-btn" id="tabBulan" onclick="gantiTabStat('bulan')">Rekap Bulanan</button>
       </div>
 
       <div id="kontenStatistik"></div>
@@ -511,6 +511,7 @@
       items: [],
       rekapHarian: {},
       rekapMingguan: {},
+      rekapBulanan: {},
       tampilan: {
         tema: 'light',
         ukuran: '16px',
@@ -582,6 +583,15 @@
       return NAMA_HARI[dt.getDay()];
     }
 
+    function getInfoBulan(isoStr) {
+      const dt = parseTanggalLokal(isoStr);
+      const y = dt.getFullYear();
+      const m = String(dt.getMonth() + 1).padStart(2, '0');
+      const key = `${y}-${m}`;
+      const label = dt.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+      return { key, label };
+    }
+
     function getInfoMinggu(isoStr) {
       const dt = parseTanggalLokal(isoStr);
       const dayNum = dt.getDay() || 7;
@@ -606,11 +616,13 @@
     function perbaruiRekapTersimpan() {
       const harian = {};
       const mingguan = {};
+      const bulanan = {};
 
       state.items.forEach((item) => {
         const tgl = item.tanggal || getTanggalHariIniISO();
         const hari = item.hari || getNamaHariDariISO(tgl);
         const infoMinggu = getInfoMinggu(tgl);
+        const infoBulan = getInfoBulan(tgl);
 
         if (!harian[tgl]) {
           harian[tgl] = { tanggal: tgl, hari, total: 0, jumlahTransaksi: 0 };
@@ -628,10 +640,22 @@
         }
         mingguan[infoMinggu.key].total += Number(item.nominal || 0);
         mingguan[infoMinggu.key].jumlahTransaksi += 1;
+
+        if (!bulanan[infoBulan.key]) {
+          bulanan[infoBulan.key] = {
+            kode: infoBulan.key,
+            label: infoBulan.label,
+            total: 0,
+            jumlahTransaksi: 0
+          };
+        }
+        bulanan[infoBulan.key].total += Number(item.nominal || 0);
+        bulanan[infoBulan.key].jumlahTransaksi += 1;
       });
 
       state.rekapHarian = harian;
       state.rekapMingguan = mingguan;
+      state.rekapBulanan = bulanan;
     }
 
     function sinkronkanForm() {
@@ -663,6 +687,7 @@
             items: itemsMigrasi,
             rekapHarian: parsed.rekapHarian || {},
             rekapMingguan: parsed.rekapMingguan || {},
+            rekapBulanan: parsed.rekapBulanan || {},
             tampilan: {
               tema: parsed.tampilan?.tema || 'light',
               ukuran: parsed.tampilan?.ukuran || '16px',
@@ -734,6 +759,7 @@
             items: itemsMigrasi,
             rekapHarian: parsed.rekapHarian || {},
             rekapMingguan: parsed.rekapMingguan || {},
+            rekapBulanan: parsed.rekapBulanan || {},
             tampilan: {
               tema: parsed.tampilan?.tema || 'light',
               ukuran: parsed.tampilan?.ukuran || '16px',
@@ -865,10 +891,11 @@
     }
 
     function resetSemua() {
-      if (!confirm('Hapus semua riwayat, rekap harian, dan rekap mingguan?')) return;
+      if (!confirm('Hapus semua riwayat, rekap harian, mingguan, dan bulanan?')) return;
       state.items = [];
       state.rekapHarian = {};
       state.rekapMingguan = {};
+      state.rekapBulanan = {};
       simpanData();
       render();
     }
@@ -878,6 +905,7 @@
       document.getElementById('tabHari').classList.toggle('active', tab === 'hari');
       document.getElementById('tabTanggal').classList.toggle('active', tab === 'tanggal');
       document.getElementById('tabMinggu').classList.toggle('active', tab === 'minggu');
+      document.getElementById('tabBulan').classList.toggle('active', tab === 'bulan');
       renderStatistik();
     }
 
@@ -996,12 +1024,37 @@
           `;
           container.appendChild(row);
         });
+      } else if (tabAktif === 'bulan') {
+        const daftarBulanan = Object.values(state.rekapBulanan).sort((a, b) => b.kode.localeCompare(a.kode));
+        const maxVal = Math.max(...daftarBulanan.map((b) => b.total), 1);
+
+        daftarBulanan.forEach((rec) => {
+          const persen = Math.round((rec.total / maxVal) * 100);
+          const isPeak = rec.total === maxVal && rec.total > 0;
+
+          const row = document.createElement('div');
+          row.className = 'bar-row';
+          row.innerHTML = `
+            <div class="bar-label">
+              <span>${rec.label} (${rec.jumlahTransaksi}x)${isPeak ? '<span class="badge-peak">Tertinggi</span>' : ''}</span>
+              <strong>${formatRp(rec.total)}</strong>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill ${isPeak ? 'peak' : ''}" style="width:${persen}%"></div>
+            </div>
+          `;
+          container.appendChild(row);
+        });
       }
     }
 
     function render() {
       const totalKeluar = state.items.reduce((acc, item) => acc + Number(item.nominal || 0), 0);
       const sisaSaldo = state.saldoAwal - totalKeluar;
+
+      const tanggalAcuan = document.getElementById('tanggalInput')?.value || getTanggalHariIniISO();
+      const infoBulanAcuan = getInfoBulan(tanggalAcuan);
+      const totalBulanAcuan = state.rekapBulanan[infoBulanAcuan.key]?.total || 0;
 
       const hariIniISO = getTanggalHariIniISO();
       const terpakaiHariIni = state.items
@@ -1011,7 +1064,8 @@
       const sisaJatahHariIni = state.batasHarian > 0 ? state.batasHarian - terpakaiHariIni : 0;
 
       const elSisa = document.getElementById('sisaSaldo');
-      const elKeluar = document.getElementById('totalKeluar');
+      const elLabelBulan = document.getElementById('labelTotalBulanan');
+      const elTotalBulan = document.getElementById('totalBulanan');
       const elTerpakaiHari = document.getElementById('terpakaiHariIni');
       const elSisaJatah = document.getElementById('sisaJatahHariIni');
       const elStatusBatasHari = document.getElementById('statusBatasHariIni');
@@ -1019,7 +1073,8 @@
       const elList = document.getElementById('daftarRiwayat');
 
       elSisa.textContent = formatRp(sisaSaldo);
-      elKeluar.textContent = formatRp(totalKeluar);
+      elLabelBulan.textContent = 'Total ' + infoBulanAcuan.label;
+      elTotalBulan.textContent = formatRp(totalBulanAcuan);
       elTerpakaiHari.textContent = formatRp(terpakaiHariIni);
       elStatusBatasHari.textContent = state.batasHarian > 0
         ? 'Batas: ' + formatRp(state.batasHarian)

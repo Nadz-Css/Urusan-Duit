@@ -1,0 +1,19 @@
+{
+  "name": "Pelacak Pengeluaran Harian",
+  "short_name": "Catat Uang",
+  "description": "Aplikasi pencatat pengeluaran harian dengan batas saldo dan peringatan otomatis.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6f8",
+  "theme_color": "#1d4ed8",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1d4ed8" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Catat Uang" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+  <link rel="apple-touch-icon" href="./icon.svg" />
+  <title>Catat Pengeluaran</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --input-bg: #ffffff;
+      --stat-bg: #f9fafb;
+      --accent: #1d4ed8;
+      --accent-text: #ffffff;
+      --sec-bg: #e5e7eb;
+      --sec-text: #111827;
+      --font-scale: 16px;
+    }
+
+    body.dark {
+      --bg: #111827;
+      --card: #1f2937;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --border: #374151;
+      --input-bg: #111827;
+      --stat-bg: #111827;
+      --sec-bg: #374151;
+      --sec-text: #f3f4f6;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    html {
+      font-size: var(--font-scale);
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      padding: 16px;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .app {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 8px;
+    }
+
+    h1 {
+      font-size: 1.15rem;
+      margin: 0;
+    }
+
+    h2 {
+      font-size: 1rem;
+      margin: 0 0 10px;
+    }
+
+    .saldo-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .stat {
+      background: var(--stat-bg);
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .stat small {
+      color: var(--muted);
+      display: block;
+      font-size: 0.8rem;
+    }
+
+    .stat strong {
+      font-size: 1.1rem;
+    }
+
+    .danger { color: #ef4444; }
+    .warn-text { color: #f59e0b; }
+
+    .alert {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .alert.warn {
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      color: #92400e;
+      display: block;
+    }
+
+    .alert.over {
+      background: #fee2e2;
+      border: 1px solid #ef4444;
+      color: #991b1b;
+      display: block;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+      color: var(--muted);
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 0.95rem;
+      margin-bottom: 10px;
+      background: var(--input-bg);
+      color: var(--text);
+    }
+
+    button {
+      background: var(--accent);
+      color: var(--accent-text);
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: var(--sec-bg);
+      color: var(--sec-text);
+    }
+
+    button.small {
+      width: auto;
+      padding: 6px 10px;
+      font-size: 0.8rem;
+      margin: 0;
+    }
+
+    .row-inline {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .color-options {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .color-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      padding: 0;
+      margin: 0;
+      border: 2px solid transparent;
+    }
+
+    .color-btn.active {
+      border-color: var(--text);
+      transform: scale(1.1);
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 8px;
+    }
+
+    li:last-child {
+      border-bottom: none;
+    }
+
+    .item-meta small {
+      color: var(--muted);
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="card">
+      <div class="header-row">
+        <h1>Pelacak Pengeluaran</h1>
+        <div style="display:flex; gap:6px;">
+          <button type="button" id="btnInstall" class="small hidden" onclick="installPWA()">Install App</button>
+          <button type="button" class="secondary small" onclick="togglePanelTampilan()">Tampilan</button>
+        </div>
+      </div>
+      <div class="saldo-box">
+        <div class="stat">
+          <small>Sisa Saldo</small>
+          <strong id="sisaSaldo">Rp0</strong>
+        </div>
+        <div class="stat">
+          <small>Total Keluar</small>
+          <strong id="totalKeluar">Rp0</strong>
+        </div>
+      </div>
+    </div>
+
+    <div id="panelTampilan" class="card hidden">
+      <h2>Pengaturan Tampilan</h2>
+      <div class="row-inline">
+        <div>
+          <label for="pilihTema">Mode Warna</label>
+          <select id="pilihTema" onchange="ubahTampilan()">
+            <option value="light">Terang (Light)</option>
+            <option value="dark">Gelap (Dark)</option>
+          </select>
+        </div>
+        <div>
+          <label for="pilihUkuran">Ukuran Teks</label>
+          <select id="pilihUkuran" onchange="ubahTampilan()">
+            <option value="14px">Kecil</option>
+            <option value="16px">Normal</option>
+            <option value="18px">Besar</option>
+          </select>
+        </div>
+      </div>
+
+      <label>Warna Utama Tombol</label>
+      <div class="color-options" id="colorOptions">
+        <button type="button" class="color-btn" data-color="#1d4ed8" style="background:#1d4ed8;" onclick="pilihWarna('#1d4ed8')"></button>
+        <button type="button" class="color-btn" data-color="#047857" style="background:#047857;" onclick="pilihWarna('#047857')"></button>
+        <button type="button" class="color-btn" data-color="#b45309" style="background:#b45309;" onclick="pilihWarna('#b45309')"></button>
+        <button type="button" class="color-btn" data-color="#6d28d9" style="background:#6d28d9;" onclick="pilihWarna('#6d28d9')"></button>
+        <button type="button" class="color-btn" data-color="#be123c" style="background:#be123c;" onclick="pilihWarna('#be123c')"></button>
+      </div>
+    </div>
+
+    <div id="peringatan" class="alert"></div>
+
+    <div class="card">
+      <h2>Atur Saldo &amp; Batas Aman</h2>
+      <div class="row-inline">
+        <div>
+          <label for="inputSaldo">Saldo Awal (Rp)</label>
+          <input type="number" id="inputSaldo" min="0" step="1000" placeholder="200000" />
+        </div>
+        <div>
+          <label for="inputBatas">Batas Peringatan (Rp)</label>
+          <input type="number" id="inputBatas" min="0" step="1000" placeholder="30000" />
+        </div>
+      </div>
+      <button type="button" onclick="simpanPengaturan()">Simpan Saldo &amp; Batas</button>
+    </div>
+
+    <div class="card">
+      <h2>Catat Pengeluaran</h2>
+      <form id="formPengeluaran" onsubmit="tambahPengeluaran(event)">
+        <label for="nominal">Nominal (Rp)</label>
+        <input type="number" id="nominal" min="1" required placeholder="15000" />
+
+        <label for="kategori">Kategori</label>
+        <select id="kategori">
+          <option value="Makan">Makan</option>
+          <option value="Jajan">Jajan / Snack</option>
+          <option value="Bensin">Bensin</option>
+          <option value="Lainnya">Lainnya</option>
+        </select>
+
+        <label for="catatan">Catatan (Opsional)</label>
+        <input type="text" id="catatan" placeholder="Contoh: cilok, air galon" />
+
+        <button type="submit">Simpan Pengeluaran</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:6px; flex-wrap:wrap;">
+        <h2 style="margin:0;">Riwayat</h2>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button type="button" class="secondary small" onclick="eksporBackup()">Ekspor Backup</button>
+          <button type="button" class="secondary small" onclick="memicuImpor()">Impor Backup</button>
+          <button type="button" class="secondary small" onclick="resetSemua()">Reset Data</button>
+        </div>
+      </div>
+      <input type="file" id="fileImpor" accept=".json,application/json" style="display:none;" onchange="imporBackup(event)" />
+      <ul id="daftarRiwayat"></ul>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'pengeluaran_harian_v2';
+    let deferredPrompt = null;
+
+    let state = {
+      saldoAwal: 200000,
+      batasAman: 30000,
+      items: [],
+      tampilan: {
+        tema: 'light',
+        ukuran: '16px',
+        warna: '#1d4ed8'
+      }
+    };
+
+    // Registrasi Service Worker
+    if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch((err) => {
+          console.error('Gagal mendaftarkan Service Worker:', err);
+        });
+      });
+    }
+
+    // Tangkap event install PWA dari browser
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('btnInstall').classList.remove('hidden');
+    });
+
+    window.addEventListener('appinstalled', () => {
+      deferredPrompt = null;
+      document.getElementById('btnInstall').classList.add('hidden');
+    });
+
+    async function installPWA() {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      document.getElementById('btnInstall').classList.add('hidden');
+    }
+
+    function formatRp(angka) {
+      return 'Rp' + Number(angka || 0).toLocaleString('id-ID');
+    }
+
+    function sinkronkanForm() {
+      document.getElementById('inputSaldo').value = state.saldoAwal;
+      document.getElementById('inputBatas').value = state.batasAman;
+      document.getElementById('pilihTema').value = state.tampilan.tema;
+      document.getElementById('pilihUkuran').value = state.tampilan.ukuran;
+    }
+
+    function muatData() {
+      const tersimpan = localStorage.getItem(STORAGE_KEY);
+      if (tersimpan) {
+        try {
+          const parsed = JSON.parse(tersimpan);
+          state = {
+            saldoAwal: Number(parsed.saldoAwal ?? 200000),
+            batasAman: Number(parsed.batasAman ?? 30000),
+            items: Array.isArray(parsed.items) ? parsed.items : [],
+            tampilan: {
+              tema: parsed.tampilan?.tema || 'light',
+              ukuran: parsed.tampilan?.ukuran || '16px',
+              warna: parsed.tampilan?.warna || '#1d4ed8'
+            }
+          };
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      sinkronkanForm();
+      terapkanTampilan();
+      render();
+    }
+
+    function simpanData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function eksporBackup() {
+      const dataStr = JSON.stringify(state, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const tanggal = new Date().toISOString().slice(0, 10);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'backup-pengeluaran-' + tanggal + '.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    function memicuImpor() {
+      document.getElementById('fileImpor').click();
+    }
+
+    function imporBackup(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(String(e.target?.result || ''));
+          if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.items)) {
+            alert('Format file backup tidak sesuai.');
+            return;
+          }
+
+          state = {
+            saldoAwal: Number(parsed.saldoAwal ?? 200000),
+            batasAman: Number(parsed.batasAman ?? 30000),
+            items: parsed.items,
+            tampilan: {
+              tema: parsed.tampilan?.tema || 'light',
+              ukuran: parsed.tampilan?.ukuran || '16px',
+              warna: parsed.tampilan?.warna || '#1d4ed8'
+            }
+          };
+
+          simpanData();
+          sinkronkanForm();
+          terapkanTampilan();
+          render();
+          alert('Data backup berhasil dipulihkan.');
+        } catch (err) {
+          alert('Gagal membaca file backup. Pastikan file berformat .json yang valid.');
+        } finally {
+          event.target.value = '';
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function togglePanelTampilan() {
+      document.getElementById('panelTampilan').classList.toggle('hidden');
+    }
+
+    function ubahTampilan() {
+      state.tampilan.tema = document.getElementById('pilihTema').value;
+      state.tampilan.ukuran = document.getElementById('pilihUkuran').value;
+      terapkanTampilan();
+      simpanData();
+    }
+
+    function pilihWarna(hex) {
+      state.tampilan.warna = hex;
+      terapkanTampilan();
+      simpanData();
+    }
+
+    function terapkanTampilan() {
+      if (state.tampilan.tema === 'dark') {
+        document.body.classList.add('dark');
+      } else {
+        document.body.classList.remove('dark');
+      }
+
+      document.documentElement.style.setProperty('--font-scale', state.tampilan.ukuran);
+      document.documentElement.style.setProperty('--accent', state.tampilan.warna);
+
+      const metaTheme = document.querySelector('meta[name="theme-color"]');
+      if (metaTheme) metaTheme.setAttribute('content', state.tampilan.warna);
+
+      document.querySelectorAll('.color-btn').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.color === state.tampilan.warna);
+      });
+    }
+
+    function simpanPengaturan() {
+      const saldoBaru = Number(document.getElementById('inputSaldo').value);
+      const batasBaru = Number(document.getElementById('inputBatas').value);
+      if (Number.isNaN(saldoBaru) || saldoBaru < 0 || Number.isNaN(batasBaru) || batasBaru < 0) {
+        alert('Masukkan angka yang valid (0 atau lebih).');
+        return;
+      }
+      state.saldoAwal = saldoBaru;
+      state.batasAman = batasBaru;
+      simpanData();
+      render();
+    }
+
+    function tambahPengeluaran(event) {
+      event.preventDefault();
+      const nominal = Number(document.getElementById('nominal').value);
+      const kategori = document.getElementById('kategori').value;
+      const catatan = document.getElementById('catatan').value.trim();
+
+      if (!nominal || nominal <= 0) return;
+
+      const totalKeluarSekarang = state.items.reduce((acc, item) => acc + item.nominal, 0);
+      const sisaSetelahnya = state.saldoAwal - (totalKeluarSekarang + nominal);
+
+      if (sisaSetelahnya < 0) {
+        const lanjut = confirm(
+          'Peringatan: Pengeluaran ini melebihi saldo yang tersedia (sisa menjadi ' +
+          formatRp(sisaSetelahnya) + '). Tetap catat?'
+        );
+        if (!lanjut) return;
+      }
+
+      state.items.unshift({
+        id: Date.now(),
+        nominal,
+        kategori,
+        catatan,
+        waktu: new Date().toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })
+      });
+
+      simpanData();
+      document.getElementById('formPengeluaran').reset();
+      render();
+    }
+
+    function hapusItem(id) {
+      state.items = state.items.filter((item) => item.id !== id);
+      simpanData();
+      render();
+    }
+
+    function resetSemua() {
+      if (!confirm('Hapus semua riwayat pengeluaran?')) return;
+      state.items = [];
+      simpanData();
+      render();
+    }
+
+    function render() {
+      const totalKeluar = state.items.reduce((acc, item) => acc + item.nominal, 0);
+      const sisaSaldo = state.saldoAwal - totalKeluar;
+
+      const elSisa = document.getElementById('sisaSaldo');
+      const elKeluar = document.getElementById('totalKeluar');
+      const elPeringatan = document.getElementById('peringatan');
+      const elList = document.getElementById('daftarRiwayat');
+
+      elSisa.textContent = formatRp(sisaSaldo);
+      elKeluar.textContent = formatRp(totalKeluar);
+
+      elSisa.classList.remove('danger', 'warn-text');
+      elPeringatan.className = 'alert';
+      elPeringatan.textContent = '';
+
+      if (sisaSaldo < 0) {
+        elSisa.classList.add('danger');
+        elPeringatan.classList.add('over');
+        elPeringatan.textContent =
+          'Peringatan: Pengeluaran sudah melebihi saldo tersedia sebesar ' + formatRp(Math.abs(sisaSaldo)) + '.';
+      } else if (sisaSaldo <= state.batasAman) {
+        elSisa.classList.add('warn-text');
+        elPeringatan.classList.add('warn');
+        elPeringatan.textContent =
+          'Peringatan: Sisa saldo (' + formatRp(sisaSaldo) + ') sudah mencapai atau di bawah batas aman (' +
+          formatRp(state.batasAman) + ').';
+      }
+
+      if (state.items.length === 0) {
+        elList.innerHTML = '<li><span style="color:var(--muted);">Belum ada pengeluaran tercatat.</span></li>';
+        return;
+      }
+
+      elList.innerHTML = '';
+      state.items.forEach((item) => {
+        const li = document.createElement('li');
+        const info = document.createElement('div');
+        info.className = 'item-meta';
+
+        const judul = document.createElement('div');
+        judul.innerHTML = '<strong>' + formatRp(item.nominal) + '</strong> · ' + item.kategori;
+
+        const sub = document.createElement('small');
+        sub.textContent = (item.catatan ? item.catatan + ' · ' : '') + item.waktu;
+
+        info.appendChild(judul);
+        info.appendChild(sub);
+
+        const btnHapus = document.createElement('button');
+        btnHapus.type = 'button';
+        btnHapus.className = 'secondary small';
+        btnHapus.textContent = 'Hapus';
+        btnHapus.onclick = () => hapusItem(item.id);
+
+        li.appendChild(info);
+        li.appendChild(btnHapus);
+        elList.appendChild(li);
+      });
+    }
+
+    muatData();
+  </script>
+</body>
+</html>
